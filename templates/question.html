@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>問題 {{ qid + 1 }}</title>
+</head>
+<body>
+    <h1>問題 {{ qid + 1 }}/{{ questions|length }}</h1>
+    <form method="post">
+        <p>{{ question }}</p>
+        {% if qid == 13 %}
+            <input type="number" name="answer" placeholder="請輸入小時數" required>
+        {% else %}
+            <button type="submit" name="answer" value="yes">是</button>
+            <button type="submit" name="answer" value="no">否</button>
+        {% endif %}
+    </form>
+</body>
+</html>

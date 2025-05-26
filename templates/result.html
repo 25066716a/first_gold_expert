@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>推薦結果</title>
+</head>
+<body>
+    <h1>最推薦的工作</h1>
+    <ul>
+        {% for job in jobs %}
+            <li>
+                <strong>{{ job['工作'] }}</strong>（分數：{{ job['score'] }}）<br>
+                時薪：{{ job['時薪(下限)'] }} ~ {{ job['時薪上限'] }} 元<br>
+                條件限制：{{ job['條件限制'] }}<br>
+                時間要求：{{ job['時間要求'] }}<br>
+                備註：{{ job['備注'] }}
+            </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
