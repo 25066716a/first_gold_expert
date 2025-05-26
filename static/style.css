@@ -1,24 +1,102 @@
+/* 全域樣式 */
 body {
-    font-family: "Microsoft JhengHei", sans-serif;
-    background-color: #f9f9f9;
-    padding: 20px;
+    font-family: 'Segoe UI', 'Noto Sans', sans-serif;
+    background: #f9fafb;
+    color: #333;
+    margin: 0;
+    padding: 0;
 }
 
+/* 容器 */
 .container {
-    background: white;
     max-width: 800px;
-    margin: auto;
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    margin: 50px auto;
+    padding: 2rem;
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-button {
-    padding: 10px 20px;
-    font-size: 1em;
-    background-color: #2980b9;
+/* 標題 */
+h1, h2 {
+    color: #222;
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+/* 表單 */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+}
+
+label {
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+input[type="text"], textarea, select {
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+input[type="text"]:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3);
+}
+
+/* 按鈕 */
+button, input[type="submit"] {
+    background-color: #6366f1;
     color: white;
+    padding: 0.75rem 1.5rem;
     border: none;
-    border-radius: 5px;
+    border-radius: 0.5rem;
+    font-size: 1rem;
     cursor: pointer;
+    transition: background-color 0.3s ease;
+    align-self: flex-start;
+}
+
+button:hover, input[type="submit"]:hover {
+    background-color: #4f46e5;
+}
+
+/* 結果頁表格 */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 2rem;
+}
+
+th, td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #eee;
+    text-align: left;
+}
+
+th {
+    background-color: #f3f4f6;
+    color: #333;
+}
+
+/* 回首頁按鈕 */
+.back-link {
+    display: inline-block;
+    margin-top: 2rem;
+    text-decoration: none;
+    color: #6366f1;
+    font-weight: bold;
+}
+
+.back-link:hover {
+    text-decoration: underline;
 }
