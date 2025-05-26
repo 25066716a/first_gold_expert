@@ -1,20 +1,26 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <title>推薦結果</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <h1>最推薦的工作</h1>
-    <ul>
-        {% for job in jobs %}
-            <li>
-                <strong>{{ job['工作'] }}</strong>（分數：{{ job['score'] }}）<br>
-                時薪：{{ job['時薪(下限)'] }} ~ {{ job['時薪上限'] }} 元<br>
-                條件限制：{{ job['條件限制'] }}<br>
-                時間要求：{{ job['時間要求'] }}<br>
-                備註：{{ job['備注'] }}
-            </li>
-        {% endfor %}
-    </ul>
+    <div class="container">
+        <h1>最推薦的工作</h1>
+        <ul>
+            {% for job in jobs %}
+                <li style="margin-bottom: 2rem;">
+                    <strong>{{ job['工作'] }}</strong>（分數：{{ job['score'] }}）<br>
+                    時薪：{{ job['時薪(下限)'] }} ~ {{ job['時薪上限'] }} 元<br>
+                    條件限制：{{ job['條件限制'] }}<br>
+                    時間要求：{{ job['時間要求'] }}<br>
+                    備註：{{ job['備注'] }}
+                </li>
+            {% endfor %}
+        </ul>
+
+        <a class="back-link" href="{{ url_for('question', qid=0) }}">← 回到第一題</a>
+    </div>
 </body>
 </html>
