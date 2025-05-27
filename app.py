@@ -4,16 +4,7 @@ import csv
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 
-# 讀取工作資料
-def load_jobs():
-    jobs = []
-    with open('jobs.csv', newline='', encoding='utf-8') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            jobs.append(row)
-    return jobs
-
-# 篩選問題清單
+# 問題清單
 questions = [
     "時間是否要求為彈性?",
     "是否可接受排班或是完全彈性時間?",
@@ -31,38 +22,51 @@ questions = [
     "希望能在多少小時內達成一百萬目標?"
 ]
 
-# 問題對應的特徵鍵值（與 jobs.csv 對應邏輯）
-question_keys = [
-    "彈性時間", "可接受排班", "駕照", "專業技能", "排斥交際", "遠程辦公", "晝夜顛倒",
-    "寵物過敏", "特殊技能", "餐飲業", "表現加薪", "員工福利", "地點便利", "效率要求"
+# 對應條件關鍵字
+condition_keywords = [
+    "彈性", "排班", "駕照", "技術", "交際", "遠程", "晝夜顛倒",
+    "寵物", "特殊技能", "餐飲", "表現", "福利", "地點便利", "效率要求"
 ]
 
-# 每個回答的分數轉換方式
+# 讀取 CSV
+def load_jobs():
+    jobs = []
+    with open('jobs.csv', newline='', encoding='utf-8') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            jobs.append(row)
+    return jobs
+
+# 計算推薦分數
 def calculate_score(answers, job):
     score = 0
+    content = (job.get('條件限制') or '') + (job.get('備注') or '') + (job.get('時間要求') or '')
+    
     for idx, answer in enumerate(answers):
-        key = question_keys[idx]
-        # 簡單匹配文字與備註欄、條件限制、時間要求的內容
-        content = job['條件限制'] + job['備注'] + job['時間要求']
-        if answer == 'yes' and key in content:
-            score += 1
-        elif answer == 'no' and key not in content:
-            score += 1
-        elif key == "效率要求":
+        key = condition_keywords[idx]
+        # 第 14 題是數字輸入（效率要求）
+        if key == "效率要求":
             try:
-                min_hour = float(job['賺到一百萬時間(下限)'])
+                limit = float(job.get('賺到一百萬時間(下限)', 999999))
                 target = float(answer)
-                if min_hour <= target:
+                if limit <= target:
                     score += 1
             except:
-                pass
+                continue
+        else:
+            if answer == "yes" and key in content:
+                score += 1
+            elif answer == "no" and key not in content:
+                score += 1
     return score
 
+# 問卷開始
 @app.route('/')
 def index():
     session['answers'] = []
     return redirect(url_for('question', qid=0))
 
+# 顯示問題
 @app.route('/question/<int:qid>', methods=['GET', 'POST'])
 def question(qid):
     if request.method == 'POST':
@@ -73,26 +77,23 @@ def question(qid):
             return redirect(url_for('question', qid=qid + 1))
         else:
             return redirect(url_for('result'))
-    return render_template(
-    'question.html',
-    qid=qid,
-    question=questions[qid],
-    questions=questions  # 這一行是關鍵
-)
+    return render_template('question.html', qid=qid, question=questions[qid], questions=questions)
 
-
+# 顯示結果
 @app.route('/result')
 def result():
     jobs = load_jobs()
     answers = session.get('answers', [])
     scored_jobs = []
+
     for job in jobs:
         score = calculate_score(answers, job)
         job['score'] = score
         scored_jobs.append(job)
-    # 根據分數排序
-    scored_jobs.sort(key=lambda x: x['score'], reverse=True)
-    return render_template('result.html', jobs=scored_jobs[:5])
+
+    # 排序取前五
+    sorted_jobs = sorted(scored_jobs, key=lambda x: x['score'], reverse=True)
+    return render_template('result.html', jobs=sorted_jobs[:5])
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)
