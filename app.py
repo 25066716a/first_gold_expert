@@ -4,10 +4,10 @@ import csv
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 
-# 問題清單
+# 問卷問題
 questions = [
     "時間是否要求為彈性?",
-    "是否可接受排班或是固定班表?",
+    "是否可接受排班或是完全彈性時間?",
     "是否具有駕照?",
     "是否具備專業技能?",
     "是否排斥與人交際?",
@@ -19,28 +19,43 @@ questions = [
     "傾向依據額外表現獲得額外薪水?",
     "傾向有員工福利?",
     "希望離學校或家裡較方便的地方?",
-    "希望能在多少小時內達成一百萬目標?"
+    "希望能在多少小時內達成一百萬目標?",
+    "是否傾向以自身實力決定薪資，而非固定薪水?",
+    "是否傾向提供員工折扣?",
+    "是否傾向室內工作?",
+    "是否擅長與孩子相處?",
+    "是否能夠久站?",
+    "是否能夠接受要下廚的工作?",
+    "是否具有音樂相關才藝?",
+    "是否具有體育相關才藝?",
+    "是否具有學科相關才藝?",
+    "是否具有語言相關才藝?",
+    "是否具有專業科目才藝(微積分/程式語言)?",
+    "是否擅長進行銷售?",
+    "是否能夠接受勞力工作?",
+    "是否能夠接受需要穿著制服?",
+    "是否傾向做與服飾配件相關的工作?"
 ]
 
-# 條件關鍵字對應
+# 每題對應的關鍵詞（用來從工作敘述中比對）
 condition_keywords = [
-    ["彈性", "自由安排", "彈性工時"],
-    ["排班", "輪班", "固定班表"],
-    ["駕照", "自備交通工具", "可駕駛"],
-    ["技術", "專業", "經驗", "文案", "影像", "剪輯"],
-    ["客服", "銷售", "溝通", "團隊"],
-    ["遠距", "remote", "線上作業"],
-    ["大夜", "晝夜顛倒", "通宵", "夜間"],
-    ["寵物", "動物", "毛小孩"],
-    ["培訓", "學習", "無經驗可"],
-    ["餐飲", "飲料", "速食", "外送", "服務生"],
-    ["獎金", "提成", "分潤", "業績"],
-    ["福利", "團保", "三節", "津貼"],
-    ["地點", "步行", "近學校", "交通便利"],
-    []  # 第14題是數字
+    ["彈性"], ["排班"], ["駕照"], ["技術"], ["交際"], ["遠程"], ["晝夜顛倒"],
+    ["寵物"], ["特殊技能"], ["餐飲"], ["表現"], ["福利"], ["地點便利"], ["效率要求"],
+    ["實力薪資"], ["員工折扣"], ["室內"], ["孩子"], ["久站"], ["下廚"],
+    ["音樂"], ["體育"], ["學科才藝"], ["語言才藝"], ["專業才藝"],
+    ["銷售"], ["勞力"], ["制服"], ["服飾"]
 ]
 
-# 讀取工作清單
+# 每題權重（0.8～2.0，自由發揮設計）
+question_weights = [
+    1.2, 1.1, 0.8, 1.4, 1.0, 1.3, 1.0, 0.9, 1.2, 1.4,
+    1.5, 1.2, 1.6, 2.0,  # 原14題
+    1.5, 1.2, 1.3, 1.5, 1.1, 1.2,  # 新增條件
+    1.3, 1.3, 1.4, 1.3, 1.5,
+    1.4, 1.5, 1.1, 1.2
+]
+
+# 載入 jobs.csv
 def load_jobs():
     jobs = []
     with open('jobs.csv', newline='', encoding='utf-8') as csvfile:
@@ -49,47 +64,48 @@ def load_jobs():
             jobs.append(row)
     return jobs
 
-# 計算推薦分數
+# 計算推薦加權分數
 def calculate_score(answers, job):
-    score = 0
+    score = 0.0
     content = (job.get('條件限制') or '') + (job.get('備注') or '') + (job.get('時間要求') or '')
 
     for idx, answer in enumerate(answers):
+        weight = question_weights[idx]
         keywords = condition_keywords[idx]
         ans = answer.strip().lower()
+        point = 0
 
+        # 效率問題（第14題，數值型）
         if idx == 13:
-            # 數字題處理（百萬目標時間）
             try:
                 user_limit = float(answer)
                 job_limit = float(job.get('賺到一百萬時間(下限)', 999999))
                 if job_limit <= user_limit:
-                    score += 1
+                    point = 1
             except:
                 continue
-        elif idx == 4 or idx == 7:
-            # 否定型邏輯（排斥交際、過敏）
-            if ans == 'no':
-                if not any(k in content for k in keywords):
-                    score += 1
-            else:
-                if any(k in content for k in keywords):
-                    score += 1
+        # 否定偏好（如：不喜歡交際、不喜歡動物）
+        elif idx in [4, 7]:
+            if ans == 'no' and not any(k in content for k in keywords):
+                point = 1
+            elif ans == 'yes' and any(k in content for k in keywords):
+                point = 1
         else:
-            if ans == 'yes':
-                if any(k in content for k in keywords):
-                    score += 1
-            elif ans == 'no':
-                if not any(k in content for k in keywords):
-                    score += 1
+            if ans == 'yes' and any(k in content for k in keywords):
+                point = 1
+            elif ans == 'no' and not any(k in content for k in keywords):
+                point = 1
 
+        score += weight * point
     return score
 
+# 問卷開始
 @app.route('/')
 def index():
     session['answers'] = []
     return redirect(url_for('question', qid=0))
 
+# 問卷頁
 @app.route('/question/<int:qid>', methods=['GET', 'POST'])
 def question(qid):
     if request.method == 'POST':
@@ -102,6 +118,7 @@ def question(qid):
             return redirect(url_for('result'))
     return render_template('question.html', qid=qid, question=questions[qid], questions=questions)
 
+# 結果頁
 @app.route('/result')
 def result():
     jobs = load_jobs()
