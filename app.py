@@ -7,7 +7,7 @@ app.secret_key = 'your_secret_key'
 # 問題清單
 questions = [
     "時間是否要求為彈性?",
-    "是否可接受排班或是完全彈性時間?",
+    "是否可接受排班或是固定班表?",
     "是否具有駕照?",
     "是否具備專業技能?",
     "是否排斥與人交際?",
@@ -22,13 +22,25 @@ questions = [
     "希望能在多少小時內達成一百萬目標?"
 ]
 
-# 對應條件關鍵字
+# 條件關鍵字對應
 condition_keywords = [
-    "彈性", "排班", "駕照", "技術", "交際", "遠程", "晝夜顛倒",
-    "寵物", "特殊技能", "餐飲", "表現", "福利", "地點便利", "效率要求"
+    ["彈性", "自由安排", "彈性工時"],
+    ["排班", "輪班", "固定班表"],
+    ["駕照", "自備交通工具", "可駕駛"],
+    ["技術", "專業", "經驗", "文案", "影像", "剪輯"],
+    ["客服", "銷售", "溝通", "團隊"],
+    ["遠距", "remote", "線上作業"],
+    ["大夜", "晝夜顛倒", "通宵", "夜間"],
+    ["寵物", "動物", "毛小孩"],
+    ["培訓", "學習", "無經驗可"],
+    ["餐飲", "飲料", "速食", "外送", "服務生"],
+    ["獎金", "提成", "分潤", "業績"],
+    ["福利", "團保", "三節", "津貼"],
+    ["地點", "步行", "近學校", "交通便利"],
+    []  # 第14題是數字
 ]
 
-# 讀取 CSV
+# 讀取工作清單
 def load_jobs():
     jobs = []
     with open('jobs.csv', newline='', encoding='utf-8') as csvfile:
@@ -41,32 +53,43 @@ def load_jobs():
 def calculate_score(answers, job):
     score = 0
     content = (job.get('條件限制') or '') + (job.get('備注') or '') + (job.get('時間要求') or '')
-    
+
     for idx, answer in enumerate(answers):
-        key = condition_keywords[idx]
-        # 第 14 題是數字輸入（效率要求）
-        if key == "效率要求":
+        keywords = condition_keywords[idx]
+        ans = answer.strip().lower()
+
+        if idx == 13:
+            # 數字題處理（百萬目標時間）
             try:
-                limit = float(job.get('賺到一百萬時間(下限)', 999999))
-                target = float(answer)
-                if limit <= target:
+                user_limit = float(answer)
+                job_limit = float(job.get('賺到一百萬時間(下限)', 999999))
+                if job_limit <= user_limit:
                     score += 1
             except:
                 continue
+        elif idx == 4 or idx == 7:
+            # 否定型邏輯（排斥交際、過敏）
+            if ans == 'no':
+                if not any(k in content for k in keywords):
+                    score += 1
+            else:
+                if any(k in content for k in keywords):
+                    score += 1
         else:
-            if answer == "yes" and key in content:
-                score += 1
-            elif answer == "no" and key not in content:
-                score += 1
+            if ans == 'yes':
+                if any(k in content for k in keywords):
+                    score += 1
+            elif ans == 'no':
+                if not any(k in content for k in keywords):
+                    score += 1
+
     return score
 
-# 問卷開始
 @app.route('/')
 def index():
     session['answers'] = []
     return redirect(url_for('question', qid=0))
 
-# 顯示問題
 @app.route('/question/<int:qid>', methods=['GET', 'POST'])
 def question(qid):
     if request.method == 'POST':
@@ -79,7 +102,6 @@ def question(qid):
             return redirect(url_for('result'))
     return render_template('question.html', qid=qid, question=questions[qid], questions=questions)
 
-# 顯示結果
 @app.route('/result')
 def result():
     jobs = load_jobs()
@@ -91,7 +113,6 @@ def result():
         job['score'] = score
         scored_jobs.append(job)
 
-    # 排序取前五
     sorted_jobs = sorted(scored_jobs, key=lambda x: x['score'], reverse=True)
     return render_template('result.html', jobs=sorted_jobs[:5])
 
