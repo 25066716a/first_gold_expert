@@ -8,7 +8,7 @@
     <h1>推薦職業</h1>
     <ul>
         {% for job, score in jobs %}
-            <li>{{ job['職業名稱'] }} - 分數: {{ score }}</li>
+            <li>{{ job['工作'] }} - 分數: {{ score }}</li>
         {% endfor %}
     </ul>
     <a href="{{ url_for('index') }}">重新填寫問卷</a>
