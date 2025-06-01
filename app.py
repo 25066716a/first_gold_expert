@@ -121,4 +121,4 @@ def calculate_score(answers, job, region_answer):
         else:  # 南部
             if float(answers[13]) >= 40:
                 score += 1.0  # 滿40小時時薪
-::contentReference[oaicite:4]{index=4}
+
