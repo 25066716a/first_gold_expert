@@ -34,28 +34,24 @@ questions = [
     "是否擅長進行銷售?",
     "是否能夠接受勞力工作?",
     "是否能夠接受需要穿著制服?",
-    "是否傾向做與服飾配件相關的工作?"
+    "是否傾向做與服飾配件相關的工作?",
+    "你生活的地方在新竹以北嗎?"
 ]
 
-# 每題對應的關鍵詞（用來從工作敘述中比對）
 condition_keywords = [
     ["彈性"], ["排班"], ["駕照"], ["技術"], ["交際"], ["遠程"], ["晝夜顛倒"],
     ["寵物"], ["特殊技能"], ["餐飲"], ["表現"], ["福利"], ["地點便利"], ["效率要求"],
     ["實力薪資"], ["員工折扣"], ["室內"], ["孩子"], ["久站"], ["下廚"],
     ["音樂"], ["體育"], ["學科才藝"], ["語言才藝"], ["專業才藝"],
-    ["銷售"], ["勞力"], ["制服"], ["服飾"]
+    ["銷售"], ["勞力"], ["制服"], ["服飾"], ["地區"]
 ]
 
-# 每題權重（0.8～2.0，自由發揮設計）
 question_weights = [
     1.2, 1.1, 0.8, 1.4, 1.0, 1.3, 1.0, 0.9, 1.2, 1.4,
-    1.5, 1.2, 1.6, 2.0,  # 原14題
-    1.5, 1.2, 1.3, 1.5, 1.1, 1.2,  # 新增條件
-    1.3, 1.3, 1.4, 1.3, 1.5,
-    1.4, 1.5, 1.1, 1.2
+    1.5, 1.2, 1.6, 2.0, 1.5, 1.2, 1.3, 1.5, 1.1, 1.2,
+    1.3, 1.3, 1.4, 1.3, 1.5, 1.4, 1.5, 1.1, 1.2, 1.0
 ]
 
-# 載入 jobs.csv
 def load_jobs():
     jobs = []
     with open('jobs.csv', newline='', encoding='utf-8') as csvfile:
@@ -64,8 +60,7 @@ def load_jobs():
             jobs.append(row)
     return jobs
 
-# 計算推薦加權分數
-def calculate_score(answers, job):
+def calculate_score(answers, job, region_answer):
     score = 0.0
     content = (job.get('條件限制') or '') + (job.get('備注') or '') + (job.get('時間要求') or '')
 
@@ -75,7 +70,6 @@ def calculate_score(answers, job):
         ans = answer.strip().lower()
         point = 0
 
-        # 效率問題（第14題，數值型）
         if idx == 13:
             try:
                 user_limit = float(answer)
@@ -84,7 +78,6 @@ def calculate_score(answers, job):
                     point = 1
             except:
                 continue
-        # 否定偏好（如：不喜歡交際、不喜歡動物）
         elif idx in [4, 7]:
             if ans == 'no' and not any(k in content for k in keywords):
                 point = 1
@@ -97,41 +90,51 @@ def calculate_score(answers, job):
                 point = 1
 
         score += weight * point
+
+    if region_answer == '是':
+        if job['職業名稱'] == '貳樓':
+            score += 1.0
+        elif job['職業名稱'] == '一風堂':
+            score += 1.5
+        elif job['職業名稱'] == '寶雅':
+            score += 0.5
+    else:
+        if job['職業名稱'] == '貳樓':
+            score += 0.5
+        elif job['職業名稱'] == '一風堂':
+            score += 1.0
+        elif job['職業名稱'] == '寶雅':
+            score += 0.2
+
+    if job['職業名稱'] == '瓦城':
+        try:
+            if float(answers[13]) >= 40:
+                score += 1.0
+        except:
+            pass
+
     return score
 
-# 問卷開始
 @app.route('/')
 def index():
-    session['answers'] = []
-    return redirect(url_for('question', qid=0))
+    return render_template('index.html', questions=questions)
 
-# 問卷頁
-@app.route('/question/<int:qid>', methods=['GET', 'POST'])
-def question(qid):
-    if request.method == 'POST':
-        answer = request.form['answer']
-        session['answers'].append(answer)
-        session.modified = True
-        if qid + 1 < len(questions):
-            return redirect(url_for('question', qid=qid + 1))
-        else:
-            return redirect(url_for('result'))
-    return render_template('question.html', qid=qid, question=questions[qid], questions=questions)
-
-# 結果頁
-@app.route('/result')
-def result():
+@app.route('/submit', methods=['POST'])
+def submit():
+    answers = [request.form.get(f'q{i}') for i in range(len(questions))]
     jobs = load_jobs()
-    answers = session.get('answers', [])
+
+    region_answer = answers[29]  # 第30題為地區
     scored_jobs = []
 
     for job in jobs:
-        score = calculate_score(answers, job)
-        job['score'] = score
-        scored_jobs.append(job)
+        score = calculate_score(answers, job, region_answer)
+        scored_jobs.append((job, score))
 
-    sorted_jobs = sorted(scored_jobs, key=lambda x: x['score'], reverse=True)
-    return render_template('result.html', jobs=sorted_jobs[:5])
+    scored_jobs.sort(key=lambda x: x[1], reverse=True)
+    top_jobs = scored_jobs[:5]  # 取前五名
+
+    return render_template('results.html', jobs=top_jobs)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=10000)
+    app.run(debug=True)
