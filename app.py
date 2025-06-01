@@ -92,21 +92,21 @@ def calculate_score(answers, job, region_answer):
         score += weight * point
 
     if region_answer == '是':
-        if job['職業名稱'] == '貳樓':
+        if '貳樓' in job['職業名稱']:
             score += 1.0
-        elif job['職業名稱'] == '一風堂':
+        elif '一風堂' in job['職業名稱']:
             score += 1.5
-        elif job['職業名稱'] == '寶雅':
+       elif '寶雅' in job['職業名稱']:
             score += 0.5
     else:
-        if job['職業名稱'] == '貳樓':
+       if '貳樓' in job['職業名稱']:
             score += 0.5
-        elif job['職業名稱'] == '一風堂':
+       elif '一風堂' in job['職業名稱']:
             score += 1.0
-        elif job['職業名稱'] == '寶雅':
+        elif '寶雅' in job['職業名稱']:
             score += 0.2
 
-    if job['職業名稱'] == '瓦城':
+    if '瓦城' in job['職業名稱']:
         try:
             if float(answers[13]) >= 40:
                 score += 1.0
