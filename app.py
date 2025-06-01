@@ -96,12 +96,12 @@ def calculate_score(answers, job, region_answer):
             score += 1.0
         elif '一風堂' in job['職業名稱']:
             score += 1.5
-       elif '寶雅' in job['職業名稱']:
+        elif '寶雅' in job['職業名稱']:
             score += 0.5
     else:
-       if '貳樓' in job['職業名稱']:
+        if '貳樓' in job['職業名稱']:
             score += 0.5
-       elif '一風堂' in job['職業名稱']:
+        elif '一風堂' in job['職業名稱']:
             score += 1.0
         elif '寶雅' in job['職業名稱']:
             score += 0.2
