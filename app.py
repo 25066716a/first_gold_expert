@@ -115,21 +115,40 @@ def calculate_score(answers, job, region_answer):
     except:
         pass
 
-    # 新增搜尋連結欄位
     job['搜尋連結'] = f"https://www.104.com.tw/jobs/search/?keyword={job_name}"
 
     return round(score, 2)
 
 @app.route('/')
 def index():
-    return render_template('index.html', questions=questions)
+    session.clear()
+    session['answers'] = []
+    return redirect(url_for('question', idx=0))
 
-@app.route('/submit', methods=['POST'])
+@app.route('/question/<int:idx>', methods=['GET', 'POST'])
+def question(idx):
+    if request.method == 'POST':
+        answer = request.form.get('answer')
+        if answer is None:
+            return redirect(url_for('question', idx=idx))
+
+        answers = session.get('answers', [])
+        answers.append(answer)
+        session['answers'] = answers
+
+        if idx + 1 < len(questions):
+            return redirect(url_for('question', idx=idx + 1))
+        else:
+            return redirect(url_for('submit'))
+
+    return render_template('question.html', idx=idx, question=questions[idx], questions=questions)
+
+@app.route('/submit', methods=['GET'])
 def submit():
-    answers = [request.form.get(f'q{i}') for i in range(len(questions))]
+    answers = session.get('answers', [])
     jobs = load_jobs()
 
-    region_answer = answers[29]
+    region_answer = answers[29] if len(answers) > 29 else '否'
     scored_jobs = []
 
     for job in jobs:
