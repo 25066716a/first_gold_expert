@@ -1,22 +1,19 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
 <head>
-    <meta charset="UTF-8">
-    <title>問題 {{ qid + 1 }}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta charset="utf-8">
+    <title>問卷</title>
 </head>
 <body>
-    <div class="container">
-        <h1>問題 {{ qid + 1 }}/{{ questions|length }}</h1>
-        <form method="post">
-            <p>{{ question }}</p>
-            {% if qid == 13 %}
-                <input type="number" name="answer" placeholder="請輸入小時數" required>
-            {% else %}
-                <button type="submit" name="answer" value="yes">是</button>
-                <button type="submit" name="answer" value="no">否</button>
-            {% endif %}
-        </form>
-    </div>
+    <h2>問題 {{ idx + 1 }} / {{ questions|length }}</h2>
+    <form method="POST">
+        <p>{{ question }}</p>
+        <label><input type="radio" name="answer" value="yes" required> 是</label><br>
+        <label><input type="radio" name="answer" value="no" required> 否</label><br>
+        {% if idx == 13 %}
+            <label>請輸入預估可接受的工作時數：<input type="number" name="answer" required></label><br>
+        {% endif %}
+        <button type="submit">下一題</button>
+    </form>
 </body>
 </html>
