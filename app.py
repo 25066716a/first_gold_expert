@@ -63,30 +63,31 @@ def load_jobs():
 
 def calculate_score(answers, job, region_answer):
     score = 0.0
-    content = (job.get('條件限制') or '') + (job.get('備注') or '') + (job.get('時間要求') or '')
+    content = (job.get('條件限制') or '') + (job.get('備注') or '') + (job.get('時間要求') or '') + job.get('工作', '')
 
-    # 強制排除條件（硬邏輯），視為不推薦的職缺
+    # 🔒 強制排除條件（包含職稱）
     exclusion_rules = {
-        2: ["駕照"],         # 沒駕照 → 排除提到駕照的職缺
-        20: ["音樂"],        # 沒音樂才藝 → 排除音樂
-        21: ["體育"],        # 沒體育才藝 → 排除體育
-        22: ["學科"],        # 沒學科才藝 → 排除教學
-        23: ["語言"],        # 沒語言 → 排除語言相關
-        24: ["程式", "微積分", "專業科目"]  # 沒專業才藝 → 排除專業工作
+        2: ["駕照", "外送", "Uber", "熊貓"],       # 沒駕照 → 排除這些
+        20: ["鋼琴", "吉他", "音樂", "舞蹈"],       # 沒音樂才藝 → 排除音樂職位
+        21: ["體育", "羽球", "游泳"],              # 沒體育才藝
+        22: ["家教", "數學", "理化", "學科"],       # 沒學科才藝
+        23: ["英文", "日文", "韓文", "語言"],       # 沒語言才藝
+        24: ["程式", "微積分", "專業科目"]          # 沒專業才藝
     }
 
     for idx, keywords in exclusion_rules.items():
         if answers[idx].strip().lower() == 'no':
-            if any(k in content for k in keywords):
-                return 0.0  # 強制排除
+            if any(k.lower() in content.lower() for k in keywords):
+                return 0.0  # 硬性排除職缺
 
+    # ⬇️ 正常加分流程
     for idx, answer in enumerate(answers):
         weight = question_weights[idx]
         keywords = condition_keywords[idx]
         ans = answer.strip().lower()
         point = 0
 
-        if idx == 13:
+        if idx == 13:  # 賺百萬時間
             try:
                 user_limit = float(answer)
                 job_limit = float(job.get('賺到一百萬時間(下限)', 999999))
@@ -107,10 +108,9 @@ def calculate_score(answers, job, region_answer):
 
         score += weight * point
 
-    # 額外加分：地區 + 工時規則
+    # 🌐 區域加分
     job_name = job['工作']
     base_name = re.sub(r"\(.*?\)", "", job_name)
-
     if not re.search(r"\((南部|北部|台南|台北|高雄|新北|台中|桃園)\)", job_name):
         if '貳樓' in base_name:
             score += 1.0 if region_answer == '是' else 0.5
@@ -119,6 +119,7 @@ def calculate_score(answers, job, region_answer):
         elif '寶雅' in base_name:
             score += 0.5 if region_answer == '是' else 0.2
 
+    # 🕒 工時相關加分
     try:
         work_hours = float(answers[13])
         if job_name.strip() == '瓦城(外場服務員)' and work_hours >= 40:
@@ -132,7 +133,6 @@ def calculate_score(answers, job, region_answer):
         pass
 
     job['搜尋連結'] = f"https://www.104.com.tw/jobs/search/?keyword={job_name}"
-
     return round(score, 2)
 @app.route('/')
 def index():
