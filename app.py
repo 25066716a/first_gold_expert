@@ -5,7 +5,6 @@ import re
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 
-# 問卷問題
 questions = [
     "時間是否要求為彈性?",
     "是否可接受排班或是完全彈性時間?",
@@ -95,7 +94,6 @@ def calculate_score(answers, job, region_answer):
     job_name = job['工作']
     base_name = re.sub(r"\(.*?\)", "", job_name)  # 去除括號內地區
 
-    # 地區加分：只對未標示地區的項目進行加分
     if not re.search(r"\((南部|北部|台南|台北|高雄|新北|台中|桃園)\)", job_name):
         if '貳樓' in base_name:
             score += 1.0 if region_answer == '是' else 0.5
@@ -104,12 +102,19 @@ def calculate_score(answers, job, region_answer):
         elif '寶雅' in base_name:
             score += 0.5 if region_answer == '是' else 0.2
 
-    if job_name.strip() == '瓦城(外場服務員)':
     try:
-        if float(answers[13]) >= 40:
-            score += 1.0
+        user_hours = float(answers[13])
     except:
-        pass
+        user_hours = 0
+
+    if job_name.strip() == '瓦城(外場服務員)' and user_hours >= 40:
+        score += 1.0
+
+    if job_name.strip() in ['一風堂(台南)', '一風堂(北部)']:
+        if user_hours >= 140:
+            score += 1.0
+        elif user_hours >= 120:
+            score += 0.5
 
     return score
 
@@ -121,7 +126,6 @@ def index():
 def submit():
     answers = [request.form.get(f'q{i}') for i in range(len(questions))]
     jobs = load_jobs()
-
     region_answer = answers[29]  # 第30題為地區
     scored_jobs = []
 
@@ -130,7 +134,7 @@ def submit():
         scored_jobs.append((job, score))
 
     scored_jobs.sort(key=lambda x: x[1], reverse=True)
-    top_jobs = scored_jobs[:5]  # 取前五名
+    top_jobs = scored_jobs[:5]
 
     return render_template('results.html', jobs=top_jobs)
 
