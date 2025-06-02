@@ -65,6 +65,21 @@ def calculate_score(answers, job, region_answer):
     score = 0.0
     content = (job.get('條件限制') or '') + (job.get('備注') or '') + (job.get('時間要求') or '')
 
+    # 強制排除條件（硬邏輯），視為不推薦的職缺
+    exclusion_rules = {
+        2: ["駕照"],         # 沒駕照 → 排除提到駕照的職缺
+        20: ["音樂"],        # 沒音樂才藝 → 排除音樂
+        21: ["體育"],        # 沒體育才藝 → 排除體育
+        22: ["學科"],        # 沒學科才藝 → 排除教學
+        23: ["語言"],        # 沒語言 → 排除語言相關
+        24: ["程式", "微積分", "專業科目"]  # 沒專業才藝 → 排除專業工作
+    }
+
+    for idx, keywords in exclusion_rules.items():
+        if answers[idx].strip().lower() == 'no':
+            if any(k in content for k in keywords):
+                return 0.0  # 強制排除
+
     for idx, answer in enumerate(answers):
         weight = question_weights[idx]
         keywords = condition_keywords[idx]
@@ -92,6 +107,7 @@ def calculate_score(answers, job, region_answer):
 
         score += weight * point
 
+    # 額外加分：地區 + 工時規則
     job_name = job['工作']
     base_name = re.sub(r"\(.*?\)", "", job_name)
 
@@ -118,7 +134,6 @@ def calculate_score(answers, job, region_answer):
     job['搜尋連結'] = f"https://www.104.com.tw/jobs/search/?keyword={job_name}"
 
     return round(score, 2)
-
 @app.route('/')
 def index():
     session.clear()
