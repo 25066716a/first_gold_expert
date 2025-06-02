@@ -104,12 +104,12 @@ def calculate_score(answers, job, region_answer):
         elif '寶雅' in base_name:
             score += 0.5 if region_answer == '是' else 0.2
 
-    if '瓦城' in job_name:
-        try:
-            if float(answers[13]) >= 40:
-                score += 1.0
-        except:
-            pass
+    if job_name.strip() == '瓦城 外場服務員':
+    try:
+        if float(answers[13]) >= 40:
+            score += 1.0
+    except:
+        pass
 
     return score
 
