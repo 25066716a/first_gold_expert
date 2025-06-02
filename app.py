@@ -5,6 +5,7 @@ import re
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 
+# 問卷問題
 questions = [
     "時間是否要求為彈性?",
     "是否可接受排班或是完全彈性時間?",
@@ -92,7 +93,7 @@ def calculate_score(answers, job, region_answer):
         score += weight * point
 
     job_name = job['工作']
-    base_name = re.sub(r"\(.*?\)", "", job_name)  # 去除括號內地區
+    base_name = re.sub(r"\(.*?\)", "", job_name)
 
     if not re.search(r"\((南部|北部|台南|台北|高雄|新北|台中|桃園)\)", job_name):
         if '貳樓' in base_name:
@@ -103,18 +104,19 @@ def calculate_score(answers, job, region_answer):
             score += 0.5 if region_answer == '是' else 0.2
 
     try:
-        user_hours = float(answers[13])
-    except:
-        user_hours = 0
-
-    if job_name.strip() == '瓦城(外場服務員)' and user_hours >= 40:
-        score += 1.0
-
-    if job_name.strip() in ['一風堂(台南)', '一風堂(北部)']:
-        if user_hours >= 140:
+        work_hours = float(answers[13])
+        if job_name.strip() == '瓦城(外場服務員)' and work_hours >= 40:
             score += 1.0
-        elif user_hours >= 120:
-            score += 0.5
+        elif job_name.strip() in ['一風堂(台南)', '一風堂(北部)']:
+            if work_hours >= 140:
+                score += 1.0
+            elif work_hours >= 120:
+                score += 0.5
+    except:
+        pass
+
+    # 新增搜尋連結欄位
+    job['搜尋連結'] = f"https://www.104.com.tw/jobs/search/?keyword={job_name}"
 
     return score
 
@@ -126,7 +128,8 @@ def index():
 def submit():
     answers = [request.form.get(f'q{i}') for i in range(len(questions))]
     jobs = load_jobs()
-    region_answer = answers[29]  # 第30題為地區
+
+    region_answer = answers[29]
     scored_jobs = []
 
     for job in jobs:
