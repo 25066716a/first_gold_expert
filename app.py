@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 import csv
+import re
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -91,22 +92,19 @@ def calculate_score(answers, job, region_answer):
 
         score += weight * point
 
-    if region_answer == '是':
-        if '貳樓' in job['工作']:
-            score += 1.0
-        elif '一風堂' in job['工作']:
-            score += 1.5
-        elif '寶雅' in job['工作']:
-            score += 0.5
-    else:
-        if '貳樓' in job['工作']:
-            score += 0.5
-        elif '一風堂' in job['工作']:
-            score += 1.0
-        elif '寶雅' in job['工作']:
-            score += 0.2
+    job_name = job['工作']
+    base_name = re.sub(r"\(.*?\)", "", job_name)  # 去除括號內地區
 
-    if '瓦城' in job['工作']:
+    # 地區加分：只對未標示地區的項目進行加分
+    if not re.search(r"\((南部|北部|台南|台北|高雄|新北|台中|桃園)\)", job_name):
+        if '貳樓' in base_name:
+            score += 1.0 if region_answer == '是' else 0.5
+        elif '一風堂' in base_name:
+            score += 1.5 if region_answer == '是' else 1.0
+        elif '寶雅' in base_name:
+            score += 0.5 if region_answer == '是' else 0.2
+
+    if '瓦城' in job_name:
         try:
             if float(answers[13]) >= 40:
                 score += 1.0
