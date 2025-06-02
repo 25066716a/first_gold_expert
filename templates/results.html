@@ -8,7 +8,11 @@
     <h1>推薦職業</h1>
     <ul>
         {% for job, score in jobs %}
-            <li>{{ job['工作'] }} - 分數: {{ score }}</li>
+            <li>
+                {{ job['工作'] }} - 分數: {{ score }}<br>
+                <a href="{{ job['搜尋連結'] }}" target="_blank">查看相關職缺（104人力銀行）</a>
+            </li>
+            <br>
         {% endfor %}
     </ul>
     <a href="{{ url_for('index') }}">重新填寫問卷</a>
