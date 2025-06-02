@@ -118,7 +118,7 @@ def calculate_score(answers, job, region_answer):
     # 新增搜尋連結欄位
     job['搜尋連結'] = f"https://www.104.com.tw/jobs/search/?keyword={job_name}"
 
-    return score
+    return round(score, 2)
 
 @app.route('/')
 def index():
@@ -143,3 +143,4 @@ def submit():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
