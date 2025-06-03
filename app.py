@@ -68,6 +68,7 @@ def calculate_score(answers, job, region_answer):
     # 🔒 強制排除條件（包含職稱）
     exclusion_rules = {
         2: ["駕照", "外送", "Uber", "熊貓"],       # 沒駕照 → 排除這些
+        7: ["寵物"],                             # 對寵物過敏 → 排除寵物相關
         20: ["鋼琴", "吉他", "音樂", "舞蹈"],       # 沒音樂才藝 → 排除音樂職位
         21: ["體育", "羽球", "游泳"],              # 沒體育才藝
         22: ["家教", "數學", "理化", "學科"],       # 沒學科才藝
@@ -76,8 +77,12 @@ def calculate_score(answers, job, region_answer):
     }
 
     for idx, keywords in exclusion_rules.items():
-        if answers[idx].strip().lower() == 'no':
-            if any(k.lower() in content.lower() for k in keywords):
+        ans = answers[idx].strip().lower()
+        if idx == 7:
+            if ans == 'yes' and any(k.lower() in content.lower() for k in keywords):
+                return 0.0  # 硬性排除職缺
+        else:
+            if ans == 'no' and any(k.lower() in content.lower() for k in keywords):
                 return 0.0  # 硬性排除職缺
 
     # ⬇️ 正常加分流程
@@ -134,6 +139,7 @@ def calculate_score(answers, job, region_answer):
 
     job['搜尋連結'] = f"https://www.104.com.tw/jobs/search/?keyword={job_name}"
     return round(score, 2)
+
 @app.route('/')
 def index():
     session.clear()
@@ -176,5 +182,5 @@ def submit():
     return render_template('results.html', jobs=top_jobs)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True
 
