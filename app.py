@@ -183,5 +183,5 @@ def submit():
     return render_template('results.html', jobs=top_jobs)
 
 if __name__ == '__main__':
-    app.run(debug=True
+    app.run(debug=True)
 
