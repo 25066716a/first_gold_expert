@@ -62,8 +62,21 @@ def load_jobs():
     return jobs
 
 def calculate_score(answers, job, region_answer):
-    score = 0.0
+    total_score = 0.0
     content = (job.get('條件限制') or '') + (job.get('備注') or '') + (job.get('時間要求') or '') + job.get('工作', '')
+
+    # 關鍵問題：希望能在多少小時內達成一百萬目標？
+    try:
+        user_limit = float(answers[11])
+        job_limit = float(job.get('賺到一百萬時間(下限)', 999999))
+        if abs(user_limit - job_limit) <= 500:
+            total_score += 2.0
+    except:
+        pass
+
+    # 其他問題
+    other_question_indices = [i for i in range(len(answers)) if i != 11]
+    per_question_score = 8.0 / len(other_question_indices)
 
     exclusion_rules = {
         1: ["駕照", "外送", "Uber", "熊貓"],
@@ -75,62 +88,57 @@ def calculate_score(answers, job, region_answer):
         21: ["程式", "微積分", "專業科目"]
     }
 
-    for idx, keywords in exclusion_rules.items():
-        if answers[idx].strip().lower() == 'no':
-            if any(k.lower() in content.lower() for k in keywords):
-                return 0.0
-
-    for idx, answer in enumerate(answers):
-        weight = question_weights[idx]
+    for idx in other_question_indices:
+        answer = answers[idx].strip().lower()
         keywords = condition_keywords[idx]
-        ans = answer.strip().lower()
+        weight = question_weights[idx]
         point = 0
 
-        if idx == 11:
-            try:
-                user_limit = float(answer)
-                job_limit = float(job.get('賺到一百萬時間(下限)', 999999))
-                if job_limit <= user_limit:
-                    point = 1
-            except:
-                continue
-        elif idx in [2, 5]:
-            if ans == 'no' and not any(k in content for k in keywords):
+        # 排除規則
+        if idx in exclusion_rules and answer == 'no':
+            if any(k.lower() in content.lower() for k in exclusion_rules[idx]):
+                continue  # 不加分
+
+        # 特殊處理
+        if idx in [2, 5]:
+            if answer == 'no' and not any(k in content for k in keywords):
                 point = 1
-            elif ans == 'yes' and any(k in content for k in keywords):
+            elif answer == 'yes' and any(k in content for k in keywords):
                 point = 1
         else:
-            if ans == 'yes' and any(k in content for k in keywords):
+            if answer == 'yes' and any(k in content for k in keywords):
                 point = 1
-            elif ans == 'no' and not any(k in content for k in keywords):
+            elif answer == 'no' and not any(k in content for k in keywords):
                 point = 1
 
-        score += weight * point
+        total_score += per_question_score * point
 
+    # 地區加分
     job_name = job['工作']
     base_name = re.sub(r"\(.*?\)", "", job_name)
     if not re.search(r"\((南部|北部|台南|台北|高雄|新北|台中|桃園)\)", job_name):
         if '貳樓' in base_name:
-            score += 1.0 if region_answer == '是' else 0.5
+            total_score += 1.0 if region_answer == '是' else 0.5
         elif '一風堂' in base_name:
-            score += 1.5 if region_answer == '是' else 1.0
+            total_score += 1.5 if region_answer == '是' else 1.0
         elif '寶雅' in base_name:
-            score += 0.5 if region_answer == '是' else 0.2
+            total_score += 0.5 if region_answer == '是' else 0.2
 
+    # 特定職業加分
     try:
         work_hours = float(answers[11])
         if job_name.strip() == '瓦城(外場服務員)' and work_hours >= 40:
-            score += 1.0
+            total_score += 1.0
         elif job_name.strip() in ['一風堂(台南)', '一風堂(北部)']:
             if work_hours >= 140:
-                score += 1.0
+                total_score += 1.0
             elif work_hours >= 120:
-                score += 0.5
+                total_score += 0.5
     except:
         pass
 
     job['搜尋連結'] = f"https://www.104.com.tw/jobs/search/?keyword={job_name}"
-    return round(score, 2)
+    return round(total_score, 2)
 
 @app.route('/')
 def index():
