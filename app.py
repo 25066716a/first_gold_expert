@@ -251,6 +251,12 @@ def question(idx):
             return redirect(url_for('question', idx=idx))
 
         answers = session.get('answers', [])
+        # 將滑桿的值轉換為整數
+        if idx == 11:
+            try:
+                answer = int(answer)
+            except ValueError:
+                return redirect(url_for('question', idx=idx))
         answers.append(answer)
         session['answers'] = answers
 
