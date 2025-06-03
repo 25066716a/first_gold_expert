@@ -85,12 +85,12 @@ def calculate_score(answers, job, region_answer):
         19: ["家教", "數學", "理化", "學科"],
         20: ["英文", "日文", "韓文", "語言"],
         21: ["程式", "微積分", "專業科目"],
-        27: ["藝術", "美術", "舞蹈"]
+        27: ["美術家教", "舞蹈家教"]
     }
 
     for idx in other_question_indices:
         if idx >= len(condition_keywords):
-            continue
+            continue  # 跳過超出範圍的索引
 
         answer = answers[idx].strip().lower()
         keywords = condition_keywords[idx]
@@ -100,7 +100,7 @@ def calculate_score(answers, job, region_answer):
         # 排除規則
         if idx in exclusion_rules and answer == 'no':
             if any(k.lower() in content.lower() for k in exclusion_rules[idx]):
-                continue  # 不加分
+                return 0.0  # 分數設為零
 
         # 特殊處理
         if idx in [2, 5]:
