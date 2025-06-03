@@ -25,7 +25,9 @@
                 <p class="fs-5 mb-4">{{ question }}</p>
 
                 {% if idx == 11 %}
-                    <input type="number" name="answer" class="form-control mb-4" required>
+                    <label for="answer">請選擇期望達成目標的時數：</label><br>
+                    <input type="range" id="answer" name="answer" class="form-range" min="1250" max="5264" step="1" value="1250" oninput="document.getElementById('rangeValue').innerText = this.value">
+                    <p>目前選擇：<span id="rangeValue">1250</span> 小時</p>
                 {% else %}
                     <div class="form-check mb-2">
                         <input class="form-check-input" type="radio" name="answer" value="yes" required>
