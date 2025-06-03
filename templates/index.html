@@ -8,10 +8,12 @@
     <h1>請填寫以下問卷</h1>
     <form action="{{ url_for('submit') }}" method="post">
         {% for question in questions %}
-    {% set idx = loop.index0 %}
+            {% set idx = loop.index0 %}
             <p>{{ idx+1 }}. {{ question }}<br>
             {% if idx == 13 %}
-                <input type="number" name="q{{ idx }}" step="0.1" required>
+                <label for="q{{ idx }}">請選擇期望達成目標的時數：</label><br>
+                <input type="range" id="q{{ idx }}" name="q{{ idx }}" min="1250" max="5264" step="1" value="1250" oninput="document.getElementById('q{{ idx }}_value').innerText = this.value">
+                <span id="q{{ idx }}_value">1250</span> 小時
             {% else %}
                 <label><input type="radio" name="q{{ idx }}" value="yes" required> 是</label>
                 <label><input type="radio" name="q{{ idx }}" value="no"> 否</label>
