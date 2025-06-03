@@ -89,6 +89,10 @@ def calculate_score(answers, job, region_answer):
     }
 
     for idx in other_question_indices:
+        # 檢查 idx 是否在 condition_keywords 的範圍內
+        if idx >= len(condition_keywords):
+            continue  # 跳過超出範圍的索引
+
         answer = answers[idx].strip().lower()
         keywords = condition_keywords[idx]
         weight = question_weights[idx]
