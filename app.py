@@ -34,7 +34,7 @@ questions = [
     "是否能夠接受需要穿著制服？",
     "是否傾向做與服飾配件相關的工作？",
     "你生活的地方在新竹以北嗎？",
-    "是否具有舞蹈相關才能？"
+    "是否具有藝術相關才能（美術/舞蹈）？"
 ]
 
 condition_keywords = [
@@ -43,7 +43,7 @@ condition_keywords = [
     ["地點便利"], ["效率要求"], ["實力薪資"], ["室內"],
     ["孩子"], ["久站"], ["下廚"], ["音樂"], ["體育"],
     ["學科才藝"], ["語言才藝"], ["專業才藝"], ["銷售"], ["勞力"],
-    ["制服"], ["服飾"], ["地區"], ["舞蹈"]
+    ["制服"], ["服飾"], ["地區"], ["藝術"]
 ]
 
 question_weights = [
@@ -81,17 +81,16 @@ def calculate_score(answers, job, region_answer):
     exclusion_rules = {
         1: ["駕照", "外送", "Uber", "熊貓"],
         17: ["鋼琴", "吉他"],
-        27: ["舞蹈"],
         18: ["體育", "羽球", "游泳"],
         19: ["家教", "數學", "理化", "學科"],
         20: ["英文", "日文", "韓文", "語言"],
-        21: ["程式", "微積分", "專業科目"]
+        21: ["程式", "微積分", "專業科目"],
+        27: ["藝術", "美術", "舞蹈"]
     }
 
     for idx in other_question_indices:
-        # 檢查 idx 是否在 condition_keywords 的範圍內
         if idx >= len(condition_keywords):
-            continue  # 跳過超出範圍的索引
+            continue
 
         answer = answers[idx].strip().lower()
         keywords = condition_keywords[idx]
