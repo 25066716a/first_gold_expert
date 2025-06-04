@@ -283,7 +283,7 @@ def submit():
     scored_jobs.sort(key=lambda x: x[1], reverse=True)
     top_jobs = scored_jobs[:5]
 
-    return render_template('results.html', jobs=top_jobs)
+    return render_template('result.html', jobs=top_jobs)
 
 if __name__ == '__main__':
     app.run(debug=True)
